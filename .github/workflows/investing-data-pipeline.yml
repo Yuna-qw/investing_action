@@ -1,0 +1,76 @@
+name: Investing data pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_limit:
+        description: Number of eligible master rows to download first
+        required: true
+        default: "30"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  download:
+    runs-on: windows-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas numpy openpyxl
+      - name: Resolve data directory
+        shell: pwsh
+        run: |
+          $dataPath = python -c "import contextlib, io; from util import aSetting; print(aSetting.BasePath.replace(chr(92), '/'))" | Select-Object -Last 1
+          Add-Content -Path $env:GITHUB_ENV -Value "DATA_PATH=$dataPath"
+      - name: Download Investing data
+        run: python "01.investing_download_selector.py" --limit ${{ inputs.test_limit }} --fallback-full
+      - name: Upload raw data and download logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: investing-raw-data
+          path: |
+            ${{ env.DATA_PATH }}/RawData/
+            ${{ env.DATA_PATH }}/log/
+          if-no-files-found: error
+          retention-days: 7
+
+  process:
+    needs: download
+    runs-on: windows-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pandas numpy openpyxl
+      - name: Resolve data directory
+        shell: pwsh
+        run: |
+          $dataPath = python -c "import contextlib, io; from util import aSetting; print(aSetting.BasePath.replace(chr(92), '/'))" | Select-Object -Last 1
+          Add-Content -Path $env:GITHUB_ENV -Value "DATA_PATH=$dataPath"
+      - name: Download raw data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: investing-raw-data
+          path: ${{ env.DATA_PATH }}
+      - name: Clean and combine data
+        run: python "02. investing_clean.py"
+      - name: Add indicator data
+        run: python "03. i_data_manage.py"
+      - name: Manipulate processed data
+        run: python "04. investing_manipulation.py"
+      - name: Upload processed data
+        uses: actions/upload-artifact@v4
+        with:
+          name: investing-processed-data
+          path: ${{ env.DATA_PATH }}/FinalData/
+          if-no-files-found: error
+          retention-days: 14
