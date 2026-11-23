@@ -71,6 +71,14 @@ jobs:
         run: python "03. i_data_manage.py"
       - name: Manipulate processed data
         run: python "04. investing_manipulation.py"
+      - name: Process bond macro data
+        run: python "05a. macro_bond.py"
+      - name: Process equity macro data
+        run: python "05b. macro_equity.py"
+      - name: Combine macro data
+        run: python "05c. macro_combine.py"
+      - name: Run master quality checks
+        run: python "07. QC_masterItem.py"
       - name: Upload processed data
         uses: actions/upload-artifact@v4
         with:
