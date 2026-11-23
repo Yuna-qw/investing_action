@@ -16,6 +16,8 @@ jobs:
   download:
     runs-on: windows-latest
     timeout-minutes: 360
+    env:
+      PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -44,6 +46,8 @@ jobs:
     needs: download
     runs-on: windows-latest
     timeout-minutes: 360
+    env:
+      PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
