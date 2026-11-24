@@ -28,10 +28,10 @@ jobs:
       - name: Resolve data directory
         shell: pwsh
         run: |
-          $dataPath = python -c "import contextlib, io; from util import aSetting; print(aSetting.BasePath.replace(chr(92), '/'))" | Select-Object -Last 1
+          $dataPath = python -X utf8 -c "from util import aSetting; print(aSetting.BasePath.replace(chr(92), '/'))" | Select-Object -Last 1
           Add-Content -Path $env:GITHUB_ENV -Value "DATA_PATH=$dataPath"
       - name: Download Investing data
-        run: python "01.investing_download_selector.py" --limit ${{ inputs.test_limit }} --fallback-full
+        run: python -X utf8 "01.investing_download_selector.py" --limit ${{ inputs.test_limit }} --fallback-full
       - name: Upload raw data and download logs
         uses: actions/upload-artifact@v4
         with:
@@ -58,7 +58,7 @@ jobs:
       - name: Resolve data directory
         shell: pwsh
         run: |
-          $dataPath = python -c "import contextlib, io; from util import aSetting; print(aSetting.BasePath.replace(chr(92), '/'))" | Select-Object -Last 1
+          $dataPath = python -X utf8 -c "from util import aSetting; print(aSetting.BasePath.replace(chr(92), '/'))" | Select-Object -Last 1
           Add-Content -Path $env:GITHUB_ENV -Value "DATA_PATH=$dataPath"
       - name: Download raw data artifact
         uses: actions/download-artifact@v4
@@ -66,19 +66,19 @@ jobs:
           name: investing-raw-data
           path: ${{ env.DATA_PATH }}
       - name: Clean and combine data
-        run: python "02. investing_clean.py"
+        run: python -X utf8 "02. investing_clean.py"
       - name: Add indicator data
-        run: python "03. i_data_manage.py"
+        run: python -X utf8 "03. i_data_manage.py"
       - name: Manipulate processed data
-        run: python "04. investing_manipulation.py"
+        run: python -X utf8 "04. investing_manipulation.py"
       - name: Process bond macro data
-        run: python "05a. macro_bond.py"
+        run: python -X utf8 "05a. macro_bond.py"
       - name: Process equity macro data
-        run: python "05b. macro_equity.py"
+        run: python -X utf8 "05b. macro_equity.py"
       - name: Combine macro data
-        run: python "05c. macro_combine.py"
+        run: python -X utf8 "05c. macro_combine.py"
       - name: Run master quality checks
-        run: python "07. QC_masterItem.py"
+        run: python -X utf8 "07. QC_masterItem.py"
       - name: Upload processed data
         uses: actions/upload-artifact@v4
         with:
